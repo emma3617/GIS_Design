@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html>
 
+<html lang="zh-TW">
 <head>
     <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>北京歷史建築巡禮查詢系統</title>
     <link rel="stylesheet" href="https://js.arcgis.com/4.18/esri/css/main.css">
     <script src="https://js.arcgis.com/4.18/"></script>
@@ -116,8 +117,9 @@
             "esri/widgets/BasemapGallery",
             "esri/Basemap",
             "esri/widgets/Search",
-            "esri/geometry/geometryEngine"
-        ], function (Map, MapView, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, Search, geometryEngine, BasemapGallery, Basemap) {
+            "esri/geometry/geometryEngine",
+            "esri/layers/support/Field"
+        ], function (Map, MapView, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, Search, geometryEngine, BasemapGallery, Basemap,Field) {
             var map = new Map({
                 basemap: "satellite"
             });
@@ -161,6 +163,10 @@
                 outFields: ["*"],
                 latitudeField: "Latitude",
                 longitudeField: "Longitude",
+                fields: [
+                    new Field({ name: "Link", type: "string" }),
+                    // 添加其他需要的字段定义
+                ],
                 popupTemplate: {
                     title: "{Name}",
                     content: [
@@ -187,10 +193,10 @@
                                 { fieldName: "Longitude", label: "Longitude" },
                                 {
                                     fieldName: "Link",
-                                    label: "Link",
+                                    label: "More Info",
                                     visible: true,
                                     format: {
-                                        template: "<a href={Link} target='_blank'>{Link}</a>"
+                                        template: "<a href= {Link} target='_blank' >请点击获得更多资讯</a>"
                                     }
                                 }
                             ]
@@ -356,7 +362,7 @@
 
 
 
-
+//0423 link的bug還沒改好
 
 
 
