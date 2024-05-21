@@ -134,19 +134,30 @@ require([
             var eras = new Set();
             var provinces = new Set();
 
+            // 从CSV文件读取province数据
+            fetch('onlyprovince.csv')
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    lines.forEach(line => {
+                        const fields = line.split(',');
+                        provinces.add(fields[0].trim()); // 假设province在第一列
+                    });
+                    populateDropdown('provinceSelect', provinces, "请选择历史人物");
+                })
+                .catch(error => console.error('Error loading province data:', error));
+
             csvLayer.queryFeatures({
                 where: "1=1",
-                outFields: ["Architectural_style", "Era", "province"]
+                outFields: ["Architectural_style", "Era"]
             }).then(function (results) {
                 results.features.forEach(function (feature) {
                     architecturalStyles.add(feature.attributes.Architectural_style);
                     eras.add(feature.attributes.Era);
-                    provinces.add(feature.attributes.province);
                 });
 
                 populateDropdown('architecturalStyleSelect', architecturalStyles, "请选择建筑风格");
                 populateDropdown('eraSelect', eras, "请选择时代");
-                populateDropdown('provinceSelect', provinces, "请选择行政区/省份");
             });
 
             document.getElementById('architecturalStyleSelect').addEventListener('change', function () {
@@ -209,7 +220,7 @@ require([
                     document.getElementById('eraSelect').value = selectedEra;
                 }
                 if (changedElementId !== 'provinceSelect') {
-                    populateDropdown('provinceSelect', provinces, "请选择行政区/省份");
+                    populateDropdown('provinceSelect', provinces, "请选择历史人物");
                     document.getElementById('provinceSelect').value = selectedProvince;
                 }
             });
@@ -347,7 +358,6 @@ require([
                 }
             };
 
-
             if (routes[route]) {
                 const routeData = routes[route];
                 document.getElementById('routeInfo').style.display = 'block';
@@ -376,7 +386,6 @@ require([
                         attributes: { name: spot.name }
                     });
 
-
                     graphicsLayer.add(pointGraphic);
                     return pointGraphic;
                 });
@@ -393,7 +402,7 @@ require([
         }
 
         // Home button to reset map view
-        document.getElementById('homeButton').addEventListener('click', function() {
+        document.getElementById('homeButton').addEventListener('click', function () {
             view.goTo({
                 center: [116.383331, 39.916668],
                 zoom: 12
@@ -413,5 +422,10 @@ require([
                 easing: "ease-in-out"
             });
         }
+
+        // 綁定關閉按鈕事件
+        document.querySelector('.close-modal').addEventListener('click', function () {
+            closeResultsModal();
+        });
     });
 });
