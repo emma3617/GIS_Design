@@ -52,7 +52,7 @@ require([
                         { fieldName: "Longitude", label: "Longitude" },
                         { fieldName: "Architectural_style", label: "Architectural Style" },
                         { fieldName: "Era", label: "Era" },
-                        { fieldName: "province", label: "province" },
+                        { fieldName: "province", label: "Historical Figure" },
                         { fieldName: "Historical_events", label: "Historical Events" },
                         {
                             fieldName: "Link",
