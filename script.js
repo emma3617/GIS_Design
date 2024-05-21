@@ -23,7 +23,7 @@ require([
     });
 
     var csvLayer = new CSVLayer({
-        url: "history spots.csv",
+        url: "history spots_0522.csv",
         outFields: ["*"],
         latitudeField: "Latitude",
         longitudeField: "Longitude",
@@ -79,7 +79,6 @@ require([
         zoom: 12
     });
 
-
     view.when(function () {
         // 初始化下拉选单
         initDropdowns();
@@ -87,6 +86,11 @@ require([
         // 绑定搜索按钮事件
         document.getElementById('searchButton').addEventListener('click', function () {
             searchHistoricBuildings();
+        });
+
+        // 绑定清除按钮事件
+        document.getElementById('clearButton').addEventListener('click', function () {
+            clearFilters();
         });
 
         // 绑定搜索框Enter事件
@@ -127,7 +131,7 @@ require([
         function initDropdowns() {
             var architecturalStyles = new Set();
             var eras = new Set();
-            var province = new Set();
+            var provinces = new Set();
 
             csvLayer.queryFeatures({
                 where: "1=1",
@@ -136,22 +140,77 @@ require([
                 results.features.forEach(function (feature) {
                     architecturalStyles.add(feature.attributes.Architectural_style);
                     eras.add(feature.attributes.Era);
-                    province.add(feature.attributes.province);
+                    provinces.add(feature.attributes.province);
                 });
 
-                populateDropdown('architecturalStyleSelect', architecturalStyles);
-                populateDropdown('eraSelect', eras);
-                populateDropdown('provinceSelect', province);
+                populateDropdown('architecturalStyleSelect', architecturalStyles, "请选择建筑风格");
+                populateDropdown('eraSelect', eras, "请选择时代");
+                populateDropdown('provinceSelect', provinces, "请选择行政区/省份");
+            });
+
+            document.getElementById('architecturalStyleSelect').addEventListener('change', function () {
+                updateDropdowns('architecturalStyleSelect');
+            });
+            document.getElementById('eraSelect').addEventListener('change', function () {
+                updateDropdowns('eraSelect');
+            });
+            document.getElementById('provinceSelect').addEventListener('change', function () {
+                updateDropdowns('provinceSelect');
             });
         }
 
-        function populateDropdown(elementId, valuesSet) {
+        function populateDropdown(elementId, valuesSet, placeholder) {
             var selectElement = document.getElementById(elementId);
+            selectElement.innerHTML = `<option value="">${placeholder}</option>`; // 重置下拉选单并添加提示文字
             valuesSet.forEach(function (value) {
                 var option = document.createElement('option');
                 option.value = value;
                 option.textContent = value;
                 selectElement.appendChild(option);
+            });
+        }
+
+        function updateDropdowns(changedElementId) {
+            var selectedArchitecturalStyle = document.getElementById('architecturalStyleSelect').value;
+            var selectedEra = document.getElementById('eraSelect').value;
+            var selectedProvince = document.getElementById('provinceSelect').value;
+
+            var query = csvLayer.createQuery();
+            query.where = "1=1";
+
+            if (selectedArchitecturalStyle) {
+                query.where += ` AND Architectural_style = '${selectedArchitecturalStyle}'`;
+            }
+            if (selectedEra) {
+                query.where += ` AND Era = '${selectedEra}'`;
+            }
+            if (selectedProvince) {
+                query.where += ` AND province = '${selectedProvince}'`;
+            }
+
+            csvLayer.queryFeatures(query).then(function (results) {
+                var architecturalStyles = new Set();
+                var eras = new Set();
+                var provinces = new Set();
+
+                results.features.forEach(function (feature) {
+                    architecturalStyles.add(feature.attributes.Architectural_style);
+                    eras.add(feature.attributes.Era);
+                    provinces.add(feature.attributes.province);
+                });
+
+                if (changedElementId !== 'architecturalStyleSelect') {
+                    populateDropdown('architecturalStyleSelect', architecturalStyles, "请选择建筑风格");
+                    document.getElementById('architecturalStyleSelect').value = selectedArchitecturalStyle;
+                }
+                if (changedElementId !== 'eraSelect') {
+                    populateDropdown('eraSelect', eras, "请选择时代");
+                    document.getElementById('eraSelect').value = selectedEra;
+                }
+                if (changedElementId !== 'provinceSelect') {
+                    populateDropdown('provinceSelect', provinces, "请选择行政区/省份");
+                    document.getElementById('provinceSelect').value = selectedProvince;
+                }
             });
         }
 
@@ -174,7 +233,7 @@ require([
                 query.where += ` AND Era = '${era}'`;
             }
             if (province) {
-                query.where += ` AND Historical_figures = '${province}'`;
+                query.where += ` AND province = '${province}'`;
             }
 
             csvLayer.queryFeatures(query).then(function (results) {
@@ -239,6 +298,14 @@ require([
             });
         }
 
+        function clearFilters() {
+            document.getElementById('searchBox').value = '';
+            document.getElementById('architecturalStyleSelect').value = '';
+            document.getElementById('eraSelect').value = '';
+            document.getElementById('provinceSelect').value = '';
+            initDropdowns();
+        }
+
         /* 添加路線圖層 */
         const graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
@@ -292,15 +359,16 @@ require([
                 graphicsLayer.add(polylineGraphic);
             }
         }
-            // Home button to reset map view
-            document.getElementById('homeButton').addEventListener('click', function() {
-                view.goTo({
-                    center: [116.383331, 39.916668],
-                    zoom: 12
-                }, {
-                    duration: 500,
-                    easing: "ease-in-out"
-                });
+
+        // Home button to reset map view
+        document.getElementById('homeButton').addEventListener('click', function() {
+            view.goTo({
+                center: [116.383331, 39.916668],
+                zoom: 12
+            }, {
+                duration: 500,
+                easing: "ease-in-out"
+            });
         });
     });
 });
