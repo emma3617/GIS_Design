@@ -1,4 +1,4 @@
-var view, csvLayer; // 定义为全局变量
+var view, csvLayer, graphicsLayer; // 定义为全局变量
 
 require([
     "esri/views/MapView",
@@ -22,7 +22,7 @@ require([
         symbol: markerSymbol
     });
 
-    var csvLayer = new CSVLayer({
+    csvLayer = new CSVLayer({
         url: "history spots_0522.csv",
         outFields: ["*"],
         latitudeField: "Latitude",
@@ -72,7 +72,7 @@ require([
         layers: [csvLayer]
     });
 
-    var view = new MapView({
+    view = new MapView({
         container: "viewDiv",
         map: map,
         center: [116.383331, 39.916668], // Longitude, latitude
@@ -118,6 +118,7 @@ require([
             document.getElementById('routeSection').style.display = 'none';
             this.classList.add('active');
             document.getElementById('toggleRoute').classList.remove('active');
+            resetMapView(); // 重置地图视图
         });
 
         document.getElementById('toggleRoute').addEventListener('click', function () {
@@ -291,13 +292,6 @@ require([
             }
         }
 
-        var closeButton = document.querySelector('.close-modal');
-        if (closeButton) {
-            closeButton.addEventListener('click', function () {
-                closeResultsModal();
-            });
-        }
-
         function clearFilters() {
             document.getElementById('searchBox').value = '';
             document.getElementById('architecturalStyleSelect').value = '';
@@ -307,7 +301,7 @@ require([
         }
 
         /* 添加路線圖層 */
-        const graphicsLayer = new GraphicsLayer();
+        graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
 
         document.getElementById('showRouteButton').addEventListener('click', function () {
@@ -322,41 +316,79 @@ require([
             // 清除現有圖形
             graphicsLayer.removeAll();
 
-            // 假設我們有路線資料
+            // 路線資料
             const routes = {
                 "route1": {
-                    "details": "路線1的詳細資訊",
-                    "path": [
-                        [116.4074, 39.9042],
-                        [116.4084, 39.9052],
-                        [116.4094, 39.9062]
-                    ]
+                    "details": "路线 1 的详细信息",
+                    "spots": [
+                        { "name": "景點 1", "coordinates": [116.2908589, 40.00752469] },
+                        { "name": "景點 2", "coordinates": [116.3065917, 39.9980715] },
+                        { "name": "景點 3", "coordinates": [116.3040327, 39.99347134] }
+                    ],
+                    "color": [237, 250, 0]
+                },
+                "route2": {
+                    "details": "路线 2 的详细信息",
+                    "spots": [
+                        { "name": "景點 4", "coordinates": [116.3896137, 39.92186203] },
+                        { "name": "景點 5", "coordinates": [116.3974427, 39.92285634] },
+                        { "name": "景點 6", "coordinates": [116.3985817, 39.92502786] }
+                    ],
+                    "color": [255, 62, 165]
+                },
+                "route3": {
+                    "details": "路线 3 的详细信息",
+                    "spots": [
+                        { "name": "景點 7", "coordinates": [116.3874, 39.9042] },
+                        { "name": "景點 8", "coordinates": [116.3884, 39.9052] },
+                        { "name": "景點 9", "coordinates": [116.3894, 39.9062] }
+                    ],
+                    "color": [105, 225, 71]
                 }
-                // 添加更多路線
             };
+
 
             if (routes[route]) {
                 const routeData = routes[route];
                 document.getElementById('routeInfo').style.display = 'block';
                 document.getElementById('routeDetails').innerText = routeData.details;
 
-                const polyline = {
-                    type: "polyline",
-                    paths: routeData.path
-                };
+                const spotGraphics = routeData.spots.map(function (spot) {
+                    const point = {
+                        type: "point",
+                        longitude: spot.coordinates[0],
+                        latitude: spot.coordinates[1]
+                    };
 
-                const polylineSymbol = {
-                    type: "simple-line",
-                    color: [226, 119, 40],
-                    width: 4
-                };
+                    const pointSymbol = {
+                        type: "simple-marker",
+                        color: routeData.color,
+                        size: "12px",
+                        outline: {
+                            color: [255, 255, 255],
+                            width: 2
+                        }
+                    };
 
-                const polylineGraphic = new Graphic({
-                    geometry: polyline,
-                    symbol: polylineSymbol
+                    const pointGraphic = new Graphic({
+                        geometry: point,
+                        symbol: pointSymbol,
+                        attributes: { name: spot.name }
+                    });
+
+
+                    graphicsLayer.add(pointGraphic);
+                    return pointGraphic;
                 });
 
-                graphicsLayer.add(polylineGraphic);
+                // 計算包含所有景點的區域範圍並稍微移動視窗
+                const geometries = spotGraphics.map(graphic => graphic.geometry);
+                const extent = geometries[0].extent.clone();
+                geometries.forEach(function (geometry) {
+                    extent.union(geometry.extent);
+                });
+
+                view.goTo(extent.expand(1.2), { duration: 1000 });
             }
         }
 
@@ -370,5 +402,16 @@ require([
                 easing: "ease-in-out"
             });
         });
+
+        function resetMapView() {
+            graphicsLayer.removeAll();
+            view.goTo({
+                center: [116.383331, 39.916668],
+                zoom: 12
+            }, {
+                duration: 500,
+                easing: "ease-in-out"
+            });
+        }
     });
 });

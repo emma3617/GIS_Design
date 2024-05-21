@@ -150,6 +150,7 @@ html, body {
 
 .close-modal {
     position: absolute;
+    float: right;
     top: 10px;
     right: 10px;
     cursor: pointer;

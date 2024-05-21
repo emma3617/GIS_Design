@@ -36,12 +36,18 @@
             <button id="clearButton" class="clear-button">清除筛选</button>
         </div>
         <div id="routeSection" style="display:none;">
-            <h3>推荐旅游路线</h3>
+            <h3>推荐旅游景点</h3>
             <select id="routeSelect">
                 <option value="">请选择路线</option>
-                <!-- 路線選項會動態填充 -->
+                <option value="route1">景点组 1</option>
+                <option value="route2">景点组 2</option>
+                <option value="route3">景点组 3</option>
             </select>
-            <button id="showRouteButton" class="styled-button">显示路线</button>
+            <button id="showRouteButton" class="styled-button">显示景点</button>
+            <div id="routeInfo" style="display:none;">
+                <h4>景点组合详细信息</h4>
+                <p id="routeDetails"></p>
+            </div>
         </div>
     </div>    
     
