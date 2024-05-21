@@ -1,43 +1,28 @@
 var view, csvLayer; // 定义为全局变量
 
 require([
-    "esri/Map",
     "esri/views/MapView",
+    "esri/WebMap",
     "esri/layers/CSVLayer",
     "esri/renderers/SimpleRenderer",
     "esri/symbols/SimpleMarkerSymbol",
     "esri/widgets/BasemapGallery",
     "esri/widgets/Expand",
-    "esri/widgets/Search",
-    "esri/geometry/geometryEngine"
-], function (Map, MapView, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, BasemapGallery, Expand, Search, geometryEngine) {
-    var map = new Map({
-        basemap: "satellite"
-    });
+    "esri/Graphic",
+    "esri/layers/GraphicsLayer",
+    "dojo/domReady!"
+], function (MapView, WebMap, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, BasemapGallery, Expand, Graphic, GraphicsLayer) {
 
-    view = new MapView({
-        container: "viewDiv",
-        map: map,
-        center: [116.383331, 39.916668], // Longitude, latitude
-        zoom: 12
-    });
-
-    // 创建一个简单的点符号
     var markerSymbol = new SimpleMarkerSymbol({
-        color: [226, 119, 40], // RGBA颜色
-        outline: { // 定义外边框
-            color: [255, 255, 255], // 白色外边框
-            width: 1
-        }
+        color: [226, 119, 40],
+        outline: { color: [255, 255, 255], width: 2 }
     });
 
-    // 创建一个渲染器使用上面定义的符号
     var renderer = new SimpleRenderer({
         symbol: markerSymbol
     });
 
-    // 创建CSV图层
-    csvLayer = new CSVLayer({
+    var csvLayer = new CSVLayer({
         url: "history spots.csv",
         outFields: ["*"],
         latitudeField: "Latitude",
@@ -51,9 +36,7 @@ require([
                         {
                             title: "",
                             type: "image",
-                            value: {
-                                sourceURL: "{Image}"
-                            }
+                            value: { sourceURL: "{Image}" }
                         }
                     ]
                 },
@@ -75,9 +58,7 @@ require([
                             fieldName: "Link",
                             label: "Link",
                             visible: true,
-                            format: {
-                                template: "<a href={Link} target='_blank'>{Link}</a>"
-                            }
+                            format: { template: "<a href={Link} target='_blank'>{Link}</a>" }
                         }
                     ]
                 }
@@ -86,7 +67,18 @@ require([
         renderer: renderer
     });
 
-    map.add(csvLayer); // 将CSV图层添加到地图上
+    var map = new WebMap({
+        basemap: "satellite",
+        layers: [csvLayer]
+    });
+
+    var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [116.383331, 39.916668], // Longitude, latitude
+        zoom: 12
+    });
+
 
     view.when(function () {
         // 初始化下拉选单
@@ -105,17 +97,6 @@ require([
         });
 
         // 添加切换底图按钮到地图视图中
-        var basemapToggleButton = document.createElement("button");
-        basemapToggleButton.style.position = "absolute";
-        basemapToggleButton.style.top = "10px";
-        basemapToggleButton.style.left = "10px";
-        basemapToggleButton.style.zIndex = "30";
-        basemapToggleButton.style.background = "#fff";
-        basemapToggleButton.style.padding = "5px 10px";
-        basemapToggleButton.style.border = "1px solid #ccc";
-        basemapToggleButton.style.cursor = "pointer";
-        view.ui.add(basemapToggleButton, "top-left");
-
         var basemapGallery = new BasemapGallery({
             view: view,
             container: document.createElement("div")
@@ -128,9 +109,18 @@ require([
 
         view.ui.add(basemapGalleryExpand, "top-left");
 
-        basemapToggleButton.addEventListener('click', function () {
-            var display = basemapGallery.container.style.display;
-            basemapGallery.container.style.display = display === 'block' ? 'none' : 'block';
+        document.getElementById('toggleSearch').addEventListener('click', function () {
+            document.getElementById('searchSection').style.display = 'block';
+            document.getElementById('routeSection').style.display = 'none';
+            this.classList.add('active');
+            document.getElementById('toggleRoute').classList.remove('active');
+        });
+
+        document.getElementById('toggleRoute').addEventListener('click', function () {
+            document.getElementById('searchSection').style.display = 'none';
+            document.getElementById('routeSection').style.display = 'block';
+            this.classList.add('active');
+            document.getElementById('toggleSearch').classList.remove('active');
         });
 
         // 初始化下拉选单
@@ -248,5 +238,69 @@ require([
                 closeResultsModal();
             });
         }
+
+        /* 添加路線圖層 */
+        const graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+
+        document.getElementById('showRouteButton').addEventListener('click', function () {
+            const route = document.getElementById('routeSelect').value;
+            if (route) {
+                // 根據選擇的路線顯示地圖路徑和資訊
+                showRoute(route);
+            }
+        });
+
+        function showRoute(route) {
+            // 清除現有圖形
+            graphicsLayer.removeAll();
+
+            // 假設我們有路線資料
+            const routes = {
+                "route1": {
+                    "details": "路線1的詳細資訊",
+                    "path": [
+                        [116.4074, 39.9042],
+                        [116.4084, 39.9052],
+                        [116.4094, 39.9062]
+                    ]
+                }
+                // 添加更多路線
+            };
+
+            if (routes[route]) {
+                const routeData = routes[route];
+                document.getElementById('routeInfo').style.display = 'block';
+                document.getElementById('routeDetails').innerText = routeData.details;
+
+                const polyline = {
+                    type: "polyline",
+                    paths: routeData.path
+                };
+
+                const polylineSymbol = {
+                    type: "simple-line",
+                    color: [226, 119, 40],
+                    width: 4
+                };
+
+                const polylineGraphic = new Graphic({
+                    geometry: polyline,
+                    symbol: polylineSymbol
+                });
+
+                graphicsLayer.add(polylineGraphic);
+            }
+        }
+            // Home button to reset map view
+            document.getElementById('homeButton').addEventListener('click', function() {
+                view.goTo({
+                    center: [116.383331, 39.916668],
+                    zoom: 12
+                }, {
+                    duration: 500,
+                    easing: "ease-in-out"
+                });
+        });
     });
 });

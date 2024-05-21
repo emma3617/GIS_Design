@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="utf-8">
-    <title>北京歷史建築巡禮查詢系統</title>
+    <title>北京历史建筑巡礼查询系统</title>
     <link rel="stylesheet" href="style.css">
     <script defer src="script.js"></script>
     <link rel="stylesheet" href="https://js.arcgis.com/4.23/esri/css/main.css">
@@ -12,25 +12,44 @@
 
 <body>
     <div class="search-panel">
-        <input type="text" id="searchBox" placeholder="搜索歷史建築">
-        <select id="architecturalStyleSelect">
-            <option value="">請選擇建築風格</option>
-        </select>
-        <select id="eraSelect">
-            <option value="">請選擇時代</option>
-        </select>
-        <select id="provinceSelect">
-            <option value="">請選擇歷史人物</option>
-        </select>
-        <button id="searchButton">搜索</button>
-    </div>
+        <div class="toggle-buttons">
+            <button id="toggleSearch" class="active">搜索历史建筑</button>
+            <button id="toggleRoute">推荐旅游路线</button>
+        </div>
+        <div id="searchSection">
+            <input type="text" id="searchBox" placeholder="搜索历史建筑">
+            <select id="architecturalStyleSelect">
+                <option value="">请选择建筑风格</option>
+            </select>
+            <select id="eraSelect">
+                <option value="">请选择时代</option>
+            </select>
+            <select id="provinceSelect">
+                <option value="">请选择行政区/省份</option>
+            </select>
+            <button id="searchButton" class="styled-button">搜索</button>
+        </div>
+        <div id="routeSection" style="display:none;">
+            <h3>推荐旅游路线</h3>
+            <select id="routeSelect">
+                <option value="">请选择路线</option>
+                <!-- 路線選項會動態填充 -->
+            </select>
+            <button id="showRouteButton" class="styled-button">显示路线</button>
+        </div>
+    </div>    
+    
     <div id="resultsModal" style="display:none;">
         <span class="close-modal">&#x2715;</span>
-        <h3>搜索有多筆資料符合，請選擇一個地點：</h3>
+        <h3>搜索有多笔资料符合，请选择一个地点：</h3>
         <ul id="resultsList"></ul>
     </div>
-
+    <button id="homeButton" class="home-button" title="回到预设位置">
+        <i class="fas fa-home"></i>
+    </button>
     <div id="viewDiv"></div>
+    
+    
 </body>
 
 </html>
