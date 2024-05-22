@@ -1,8 +1,8 @@
 var view, csvLayer, graphicsLayer; // 定义为全局变量
-
 require([
+    "esri/config",
+    "esri/Map",
     "esri/views/MapView",
-    "esri/WebMap",
     "esri/layers/CSVLayer",
     "esri/renderers/SimpleRenderer",
     "esri/symbols/SimpleMarkerSymbol",
@@ -10,8 +10,12 @@ require([
     "esri/widgets/Expand",
     "esri/Graphic",
     "esri/layers/GraphicsLayer",
-    "dojo/domReady!"
-], function (MapView, WebMap, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, BasemapGallery, Expand, Graphic, GraphicsLayer) {
+    "esri/rest/route",
+    "esri/rest/support/RouteParameters",
+    "esri/rest/support/FeatureSet"
+], function (esriConfig, Map, MapView, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, BasemapGallery, Expand, Graphic, GraphicsLayer, route, RouteParameters, FeatureSet) {
+
+    esriConfig.apiKey = "AAPK8efbb4b5cc514a9d91b4d751cb9c2553Es-wAZxNQxd-WhWLSZuL_e_vThRX-SfsSTc8F0e65yV-4iMZ5NqUE9H7awRcWswN"; // 替换为您的 API 密钥
 
     var markerSymbol = new SimpleMarkerSymbol({
         color: [226, 119, 40],
@@ -22,7 +26,7 @@ require([
         symbol: markerSymbol
     });
 
-    csvLayer = new CSVLayer({
+    var csvLayer = new CSVLayer({
         url: "history spots_0522.csv",
         outFields: ["*"],
         latitudeField: "Latitude",
@@ -67,51 +71,131 @@ require([
         renderer: renderer
     });
 
-    var map = new WebMap({
-        basemap: "satellite",
-        layers: [csvLayer]
+    var map = new Map({
+        basemap: "satellite"
     });
 
-    view = new MapView({
+    var view = new MapView({
         container: "viewDiv",
         map: map,
         center: [116.383331, 39.916668], // Longitude, latitude
-        zoom: 13
+        zoom: 13,
+        constraints: {
+            snapToZoom: false
+        }
+    });
+    
+    var basemapGallery = new BasemapGallery({
+        view: view,
+        container: document.createElement("div")
     });
 
+    var basemapGalleryExpand = new Expand({
+        view: view,
+        content: basemapGallery
+    });
+
+    view.ui.add(basemapGalleryExpand, "top-left");
+
+    document.getElementById('toggleSearch').addEventListener('click', function () {
+        document.getElementById('searchSection').style.display = 'block';
+        document.getElementById('routeSection').style.display = 'none';
+        this.classList.add('active');
+        document.getElementById('toggleRoute').classList.remove('active');
+        resetMapView(); // 重置地图视图
+    });
+
+    document.getElementById('toggleRoute').addEventListener('click', function () {
+        document.getElementById('searchSection').style.display = 'none';
+        document.getElementById('routeSection').style.display = 'block';
+        this.classList.add('active');
+        document.getElementById('toggleSearch').classList.remove('active');
+    });
+    
     view.when(function () {
-        // 初始化下拉选单
-        initDropdowns();
+        var graphicsLayer = new GraphicsLayer();
+        map.add(graphicsLayer);
+        map.add(csvLayer);
 
-        // 绑定搜索按钮事件
-        document.getElementById('searchButton').addEventListener('click', function () {
-            searchHistoricBuildings();
-        });
+        const routeUrl = "https://route-api.arcgis.com/arcgis/rest/services/World/Route/NAServer/Route_World";
 
-        // 绑定清除按钮事件
-        document.getElementById('clearButton').addEventListener('click', function () {
-            clearFilters();
-        });
-
-        // 绑定搜索框Enter事件
-        document.getElementById('searchBox').addEventListener('keydown', function (event) {
-            if (event.key === "Enter" || event.keyCode === 13) { // 兼容不同浏览器
-                searchHistoricBuildings();
+        view.on("click", function (event) {
+            if (view.graphics.length === 0) {
+                addGraphic("origin", event.mapPoint);
+            } else if (view.graphics.length === 1) {
+                addGraphic("destination", event.mapPoint);
+                getRoute(); // Call the route service
+            } else {
+                view.graphics.removeAll();
+                addGraphic("origin", event.mapPoint);
             }
         });
 
-        // 添加切换底图按钮到地图视图中
-        var basemapGallery = new BasemapGallery({
-            view: view,
-            container: document.createElement("div")
-        });
+        function addGraphic(type, point) {
+            const graphic = new Graphic({
+                symbol: {
+                    type: "simple-marker",
+                    color: (type === "origin") ? "white" : "black",
+                    size: "8px"
+                },
+                geometry: point
+            });
+            view.graphics.add(graphic);
+        }
 
-        var basemapGalleryExpand = new Expand({
-            view: view,
-            content: basemapGallery
-        });
+        function getRoute() {
+            const routeParams = new RouteParameters({
+                stops: new FeatureSet({
+                    features: view.graphics.toArray()
+                }),
+                returnDirections: true
+            });
 
-        view.ui.add(basemapGalleryExpand, "top-left");
+            route.solve(routeUrl, routeParams)
+                .then(function (data) {
+                    data.routeResults.forEach(function (result) {
+                        result.route.symbol = {
+                            type: "simple-line",
+                            color: [5, 150, 255],
+                            width: 3
+                        };
+                        view.graphics.add(result.route);
+                    });
+
+                    // Display directions
+                    if (data.routeResults.length > 0) {
+                        const directions = document.createElement("ol");
+                        directions.classList = "esri-widget esri-widget--panel esri-directions__scroller";
+                        directions.style.marginTop = "0";
+                        directions.style.padding = "15px 15px 15px 30px";
+                        const features = data.routeResults[0].directions.features;
+
+                        // Show each direction
+                        features.forEach(function (result, i) {
+                            const direction = document.createElement("li");
+                            direction.innerHTML = result.attributes.text + " (" + result.attributes.length.toFixed(2) + " miles)";
+                            directions.appendChild(direction);
+                        });
+
+                        view.ui.empty("top-right");
+                        view.ui.add(directions, "top-right");
+                    }
+                })
+                .catch(function (error) {
+                    console.log(error);
+                });
+        }
+
+        // Home button to reset map view
+        document.getElementById('homeButton').addEventListener('click', function () {
+            view.goTo({
+                center: [116.383331, 39.916668],
+                zoom: 12
+            }, {
+                duration: 500,
+                easing: "ease-in-out"
+            });
+        });
 
         document.getElementById('toggleSearch').addEventListener('click', function () {
             document.getElementById('searchSection').style.display = 'block';
@@ -128,7 +212,19 @@ require([
             document.getElementById('toggleSearch').classList.remove('active');
         });
 
-        // 初始化下拉选单
+        initDropdowns();
+
+        function resetMapView() {
+            graphicsLayer.removeAll();
+            view.goTo({
+                center: [116.383331, 39.916668],
+                zoom: 12
+            }, {
+                duration: 500,
+                easing: "ease-in-out"
+            });
+        }
+
         function initDropdowns() {
             var architecturalStyles = new Set();
             var eras = new Set();
@@ -319,6 +415,19 @@ require([
             initDropdowns();
         }
 
+        document.getElementById('searchButton').addEventListener('click', searchHistoricBuildings);
+        document.getElementById('clearButton').addEventListener('click', clearFilters);
+
+        // 添加输入框的键盘事件监听器
+        document.getElementById('searchBox').addEventListener('keydown', function (event) {
+            if (event.key === "Enter") {
+                searchHistoricBuildings();
+            }
+        });
+
+        // 添加关闭按钮的事件监听器
+        document.querySelector('.close-modal').addEventListener('click', closeResultsModal);
+
         /* 添加路線圖層 */
         graphicsLayer = new GraphicsLayer();
         map.add(graphicsLayer);
@@ -338,7 +447,7 @@ require([
             // 路線資料
             const routes = {
                 "route1": {
-                    "details":`北大周边一日游：探索历史与自然之美
+                    "details":`北京大学附近一日游：探索历史与自然之美！
                     如果您想在一天之内充分体验北京的历史文化和自然美景，北大周边的一日游将是您的最佳选择。 我们将带您走访三个独具魅力的景点：圆明园、北京大学未名湖和颐和园，让您在一天内收获丰富的文化体验和美丽的风景。
 
                     首先，我们的旅程将从圆明园开始。 圆明园被誉为「万园之园」，是清代皇帝的离宫和皇家园林的代表作之一。 这里融合了中西方建筑艺术的精华，拥有无数精美的亭台楼阁和湖光山色。 漫步在这片广阔的园林中，您可以感受到昔日皇家生活的奢华与风采，同时也能领略到这座园林在历史上的重要地位。
@@ -444,46 +553,18 @@ require([
             }
         }
 
-        // Home button to reset map view
-        document.getElementById('homeButton').addEventListener('click', function () {
-            view.goTo({
-                center: [116.383331, 39.916668],
-                zoom: 12
-            }, {
-                duration: 500,
-                easing: "ease-in-out"
-            });
-        });
-
-        function resetMapView() {
-            graphicsLayer.removeAll();
-            view.goTo({
-                center: [116.383331, 39.916668],
-                zoom: 12
-            }, {
-                duration: 500,
-                easing: "ease-in-out"
-            });
-        }
-
-        // 綁定關閉按鈕事件
-        document.querySelector('.close-modal').addEventListener('click', function () {
-            closeResultsModal();
-        });
+        const historicalEraOrder = {
+            "旧石器时代": 1,
+            "新石器时代": 2,
+            "西周": 3,
+            "隋": 4,
+            "辽": 5,
+            "金": 6,
+            "元": 7,
+            "明": 8,
+            "清": 9,
+            "民国": 10,
+            "近代": 11
+        };
     });
-
-    // 定義歷史時代的順序
-    const historicalEraOrder = {
-        "旧石器时代": 1,
-        "新石器时代": 2,
-        "西周": 3,
-        "隋": 4,
-        "辽": 5,
-        "金": 6,
-        "元": 7,
-        "明": 8,
-        "清": 9,
-        "民国": 10,
-        "近代": 11
-    };
 });
