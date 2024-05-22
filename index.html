@@ -21,8 +21,8 @@
         </br>
         </br>
         </br>
-        </br>
-        <b><p style="font-size: 23px; padding: 1px; ">進階篩選功能</p></b>
+        
+        <b><p style="font-size: 23px; padding: 1px; ">进阶筛选功能</p></b>
             <select id="architecturalStyleSelect">
                 <option value="">请选择建筑风格</option>
             </select>
@@ -32,13 +32,18 @@
             <select id="provinceSelect">
                 <option value="">请选择历史人物</option>
             </select>
+            <select id="sortOrder">
+                <option value="asc">从远到近</option>
+                <option value="desc">从近到远</option>
+            </select>
             <button id="searchButton" class="styled-button">搜索</button>
             <button id="clearButton" class="clear-button">清除筛选</button>
         </div>
         <div id="routeSection" style="display:none;">
             <h3>推荐旅游景点</h3>
             <select id="routeSelect">
-                <option value="route1">北京大学附近一日游：探索历史与自然之美</option>
+                <option value="route0">请选择推荐旅游景点组</option>
+                <option value="route1">北大周边一日游：探索历史与自然之美</option>
                 <option value="route2">故宮周邊一日遊：穿越歷史與文化的魅力之旅</option>
                 <option value="route3">历史文化名街附近一日游：探索古都文化精粹</option>
             </select>

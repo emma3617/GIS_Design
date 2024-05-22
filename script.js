@@ -58,7 +58,7 @@ require([
                             fieldName: "Link",
                             label: "Link",
                             visible: true,
-                            format: { template: "<a href={Link} target='_blank'>{Link}</a>" }
+                            format: { template: "<a href={Link} target='_blank'>連結</a>" }
                         }
                     ]
                 }
@@ -76,7 +76,7 @@ require([
         container: "viewDiv",
         map: map,
         center: [116.383331, 39.916668], // Longitude, latitude
-        zoom: 12
+        zoom: 13
     });
 
     view.when(function () {
@@ -231,6 +231,7 @@ require([
             var architecturalStyle = document.getElementById('architecturalStyleSelect').value;
             var era = document.getElementById('eraSelect').value;
             var province = document.getElementById('provinceSelect').value;
+            var sortOrder = document.getElementById('sortOrder').value;
 
             var query = csvLayer.createQuery();
             query.where = "1=1";
@@ -250,6 +251,12 @@ require([
 
             csvLayer.queryFeatures(query).then(function (results) {
                 let filteredFeatures = results.features;
+
+                if (sortOrder === 'asc') {
+                    filteredFeatures.sort((a, b) => historicalEraOrder[a.attributes.Era] - historicalEraOrder[b.attributes.Era]);
+                } else {
+                    filteredFeatures.sort((a, b) => historicalEraOrder[b.attributes.Era] - historicalEraOrder[a.attributes.Era]);
+                }
 
                 if (filteredFeatures.length > 1) {
                     var resultList = document.getElementById('resultsList');
@@ -308,6 +315,7 @@ require([
             document.getElementById('architecturalStyleSelect').value = '';
             document.getElementById('eraSelect').value = '';
             document.getElementById('provinceSelect').value = '';
+            document.getElementById('sortOrder').value = 'asc';
             initDropdowns();
         }
 
@@ -330,23 +338,20 @@ require([
             // 路線資料
             const routes = {
                 "route1": {
-                    "details":`北京大学附近一日游：探索历史与自然之美！
-                    无论您是首次来到北京，还是想要更深入地了解这座古老城市的魅力，北京大学附近的一日游将带您走访三个别具特色的景点：
-                    1、圆明园
-                    2、北京大学未名湖
-                    3、宋庆龄故居。
+                    "details":`北大周边一日游：探索历史与自然之美
+                    如果您想在一天之内充分体验北京的历史文化和自然美景，北大周边的一日游将是您的最佳选择。 我们将带您走访三个独具魅力的景点：圆明园、北京大学未名湖和颐和园，让您在一天内收获丰富的文化体验和美丽的风景。
 
-                    首先，您可以来到圆明园，这座被誉为「万园之园」的皇家园林。它不仅是清代皇家园林艺术的代表作，更是中西合璧的典范。穿梭于精致的亭台楼阁和美丽的湖光山色之间，仿佛回到了昔日的辉煌。
+                    首先，我们的旅程将从圆明园开始。 圆明园被誉为「万园之园」，是清代皇帝的离宫和皇家园林的代表作之一。 这里融合了中西方建筑艺术的精华，拥有无数精美的亭台楼阁和湖光山色。 漫步在这片广阔的园林中，您可以感受到昔日皇家生活的奢华与风采，同时也能领略到这座园林在历史上的重要地位。
                     
-                    接着，步行至北京大学，您将领略到未名湖的自然风光。未名湖静谧而美丽，湖畔的树木和古建筑相映成趣，是北大师生们心灵放松的绝佳之地。在这里，您可以漫步于湖边小道，欣赏美景，并感受北大浓厚的学术氛围。
+                    接着，我们将前往北京大学，欣赏未名湖的自然风光。 未名湖位于北大校园内，静谧而美丽，湖畔的树木和古建筑相映成趣，是北大师生们心灵放松的绝佳之地。 在这里，您可以漫步于湖边小道，欣赏美景，并感受北大浓厚的学术氛围。 这段旅程将带给您一种宁静而深邃的文化享受。
                     
-                    最后，前往宋庆龄故居，这里是纪念中国伟大女性宋庆龄的地方。故居保留了宋庆龄生前的生活原貌和工作环境，展示了她为中国革命和建设所做的贡献。透过参观她的故居，您将更加了解这位伟大女性的一生，以及她对中国现代史的重要影响。
+                    最后，我们将前往颐和园，这座世界闻名的皇家园林以其壮丽的景色和丰富的历史文化遗产吸引着无数游客。 颐和园是清朝皇室的夏宫，其主要景点包括美丽的昆明湖和壮观的万寿山。 游览颐和园，您可以乘船游湖，漫步于长廊，欣赏精美的宫殿和佛香阁，并俯瞰整个园林的壮丽景色。
                     
-                    这三个景点的安排，让您在一天内既能感受到皇家园林的壮丽，又能体会现代学府的宁静与智慧，并了解一位伟大女性的动人故事。这将是一次丰富而难忘的文化之旅，让您全方位地领略北京的多彩魅力。来吧，让我们一起踏上这场精彩的一日游！`
+                    这三个景点的安排，让您在一天之内既能感受到皇家园林的壮丽与威严，又能体会现代学府的宁静与智慧，并欣赏到北京城的自然美景。 这将是一场丰富而难忘的文化之旅，让您全方位地领略北京的多彩魅力。 立即加入我们，踏上这场精彩的一日游吧！`
                     ,
                     "spots": [
-                        { "name": "景點 1", "coordinates": [116.2908589, 40.00752469] },
-                        { "name": "景點 2", "coordinates": [116.3065917, 39.9980715] },
+                        { "name": "景點 1", "coordinates": [116.305577, 40.006724] },
+                        { "name": "景點 2", "coordinates": [116.274533,39.998] },
                         { "name": "景點 3", "coordinates": [116.3040327, 39.99347134] }
                     ],
                     "color": [237, 250, 0]
@@ -466,4 +471,19 @@ require([
             closeResultsModal();
         });
     });
+
+    // 定義歷史時代的順序
+    const historicalEraOrder = {
+        "旧石器时代": 1,
+        "新石器时代": 2,
+        "西周": 3,
+        "隋": 4,
+        "辽": 5,
+        "金": 6,
+        "元": 7,
+        "明": 8,
+        "清": 9,
+        "民国": 10,
+        "近代": 11
+    };
 });
