@@ -203,6 +203,17 @@ html, body {
 }
 
 
+/*景點組按鈕*/
+.scrollable-details {
+    max-height: 400px; /* 設置最大高度，根據需要調整 */
+    overflow-y: auto; /* 啟用垂直滾動條 */
+    padding: 10px; /* 添加內邊距 */
+    border: 1px solid #ccc; /* 添加邊框 */
+    background-color: #f9f9f9; /* 背景色 */
+    border-radius: 5px; /* 圓角 */
+}
+
+
 
 /*其他按鈕區*/
 #toggleSearchWidget {
