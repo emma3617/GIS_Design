@@ -15,7 +15,7 @@ require([
     "esri/rest/support/FeatureSet"
 ], function (esriConfig, Map, MapView, CSVLayer, SimpleRenderer, SimpleMarkerSymbol, BasemapGallery, Expand, Graphic, GraphicsLayer, route, RouteParameters, FeatureSet) {
 
-    esriConfig.apiKey = "YOUR API"; // 替换为您的 API 密钥
+    esriConfig.apiKey = "AAPK8efbb4b5cc514a9d91b4d751cb9c2553Es-wAZxNQxd-WhWLSZuL_e_vThRX-SfsSTc8F0e65yV-4iMZ5NqUE9H7awRcWswN"; // 替换为您的 API 密钥
 
     var markerSymbol = new SimpleMarkerSymbol({
         color: [226, 119, 40],
