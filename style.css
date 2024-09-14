@@ -21,10 +21,10 @@ html, body {
 
 /*回到預設視圖*/
 .home-button {
-    position: relative;
-    top: 165px;
-    left: 325px;
-    width: 32px;
+    position: absolute;
+    top: 125px;
+    left: 330px;
+    width: 30px;
     height: 32px;
     background: url('home.jpg') no-repeat center center;
     background-size: cover;
