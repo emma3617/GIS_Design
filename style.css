@@ -21,9 +21,9 @@ html, body {
 
 /*回到預設視圖*/
 .home-button {
-    position: absolute;
-    top: 125px;
-    left: 363px;
+    position: relative;
+    top: 165px;
+    left: 325px;
     width: 32px;
     height: 32px;
     background: url('home.jpg') no-repeat center center;
